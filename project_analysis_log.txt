@@ -6,8 +6,8 @@
 # create an ssh key to use
 ssh-keygen -t ed25519 -C "GenomicsCourse" 
 # keygen = generate a key
-# -t = 
-# -C =
+# -t = type of key 
+# -C = comment to add descriptor to key
 
 # press enter through the prompts without naming the file or making a password
 
@@ -31,6 +31,8 @@ git remote add origin git@github.com:TamaraF0060/GenomicsCourse.git
 
 # verify origin
 git remote -v
+# -v = verbose (will give fetch and push URLs in addition to origin)
+# tells what remotes exist and where they actually point
 
 # create local directory structure
 # create project directory and change to that directory
