@@ -1,0 +1,85 @@
+### Log for Genomic Analysis Homework Assignment 1 ###
+## Tamara Fischer ##
+# 2026.3.31 #
+
+
+# create an ssh key to use
+ssh-keygen -t ed25519 -C "GenomicsCourse" 
+# keygen = generate a key
+# -t = 
+# -C =
+
+# press enter through the prompts without naming the file or making a password
+
+# load the ssh key into memory for git to use
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+# print the public key
+cat ~/.ssh/id_ed25519.pub
+# copy and paste it into github
+# GitHub.com --> settings --> SSH and GPG keys --> new SSH key
+# Title: GenomicsCourse
+# paste SSH key
+# save
+# navigate to github home page
+# click "Create new repository" on the left
+# name repository GenomicsCourse
+
+# set origin point to online GitHub repo
+git remote add origin git@github.com:TamaraF0060/GenomicsCourse.git
+
+# verify origin
+git remote -v
+
+# create local directory structure
+# create project directory and change to that directory
+mkdir project
+cd project
+# mkdir = make directory
+# cd = change directory
+
+# create data, analysis, and scripts directories
+mkdir data
+mkdir analysis
+mkdir scripts
+
+# change to data directory and add raw and processed directories
+cd data
+mkdir raw
+mkdir processed
+
+# change to analysis directory and add fastqc and bamqc directories
+cd ..
+# changes to previous directory
+cd analysis
+mkdir fastqc
+mkdir bamqc
+
+# create a placeholder file in otherwise empty directories using bash so Git can track it
+cd bamqc
+touch placeholder.txt
+cd ..
+cd fastqc
+touch placeholder.txt
+cd ..
+cd ..
+cd scripts
+touch placeholder.txt
+cd ..
+cd data
+cd raw
+touch placeholder.txt
+cd ..
+cd processed 
+touch placeholder.txt
+
+# change to the project directory and create a project analysis log
+cd ..
+cd ..
+touch project_analysis_log.txt
+# record commands and comments to code then save
+nano project_analysis_log.txt
+# ctrl+x 
+# type y
+# hit enter
