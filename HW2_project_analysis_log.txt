@@ -96,5 +96,33 @@ awk '!seen[$2]++' ../raw/hw2.fam > hw2_deduplicated.fam
 cut -f1 hw2_deduplicated.fam | sort | uniq -c > hw2_FID.counts
 # uniq -c counts consecutive (have to sort first) duplicates
 
-# HW2 Q3a:
+# HW2 Q3:
+grep "^>" ../raw/hw2.fa > hw2_fasta_names.txt
+# ^ means anything beginning with. The sample names begin with >
 
+sed '/^>/ s/_.*//' ../raw/hw2.fa > hw2_modID.fa
+# /^>/ means only apply the following command to the header lines, not the sequence or other lines
+# s means substitute (tells it to replace something with something else)
+# _.* is the pattern (an underscore followed by everything after it on the line)
+# // means replace the pattern with nothing (delete it)
+
+# HW2 Q4a:
+grep "Russia" ../raw/v62.0_HO_public.fam > hw2Russia.fam
+# found all samples from Russia
+
+wc -l hw2Russia.fam
+# wc = word count, -l flag = lines
+# there are 986 samples with FIDs from Russia
+
+awk '{print $1}' hw2Russia.fam | sort | uniq -c > hw2_uniqueFID.fam
+# found unique FIDs from Russia
+
+wc -l hw2_uniqueFID.fam
+# there are 323 unique FIDs from Russia
+
+# HW2 Q4b:
+cat hw2_uniqueFID.fam | tail
+# chose line with 18 Russia_YuzhniyOleniyOstrov_Mesolithic.AG
+
+awk '$1 == "Russia_YuzhniyOleniyOstrov_Mesolithic.AG"' hw2Russia.fam > v62_Russia_YuzhniyOleniyOstrov_Mesolithic.AG.fam
+# isolated these 18 lines to a new file
