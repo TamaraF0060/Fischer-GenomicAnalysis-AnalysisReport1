@@ -1,0 +1,100 @@
+### Log for Genomic Analysis Homework Assignment 2 ###
+## Tamara Fischer ##
+# 2026.4.14 #
+
+
+# Load the subshell "Bash" and sign into the HPC.
+# Make sure McAfee VPN is turned off and you are signed into the Global Protect thing.
+Bash
+ssh trf0060@10.119.6.131
+
+# activate the conda environment for the course
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+
+# change directory to my individual folder (trf0060)
+cd /data/Reynolds/trf0060/
+
+# pull GitHub repo to my individual folder on HPC
+# had to ask ChatGPT how to do this. It said to use <git clone https_or_SSH_key>
+git clone https://github.com/TamaraF0060/Fischer-GenomicAnalysis-AnalysisReport1.git
+
+# changed directory to Fischer-GenomicAnalysis-AnalysisReport1 on GitHub
+cd Fischer-GenomicAnalysis-AnalysisReport1/
+
+# looking at contents in directory
+ls 
+
+# changing to data directory
+cd data
+
+# make a new HW2 directory inside the data directory
+mkdir HW2
+
+# go to HW2 directory and create "raw" and "processed" directories for HW2 data files
+cd HW2
+
+mkdir raw
+
+mkdir processed
+
+# go to raw directory and copy in all files from /data/Reynolds/GenomicAnalysisCourse/HW2
+cp -r /data/Reynolds/GenomicAnalysisCourse/HW2/* /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW2/raw/
+# cp = copy
+# -r = 
+# * at end of first path indicates everything from this directory
+# second path is the path to the destination directory (where I'm copying to)
+
+# confirm copy
+ls
+
+# go to processed directory in data directory
+cd /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW2/processed/
+
+# HW2 Q1:
+awk '$3-$2 > 500 && $5 >= 100 {print $1"\t"$2"\t"$3"\t"$4"\t"$5}' ../raw/hw2.bed > hw2_intervals.bed
+# awk can be used to pull out intervals of a certain size
+# $3-$2 is subtracting column 2 from column 3
+# > 500 is pulling out intervals greater than 500 bp
+# && = and
+# $5 (from column 5) 
+# >= 100 means values greater than or equal to 100
+# {print ...} = print these columns with a tab (whitespace, "\t") between them
+# > new file name (hw2_intervals.bed)
+
+# HW2 Q2a: 
+wc -l ../raw/hw2.fam
+# wc = word count 
+# -l flag = number of lines in the following file
+# 1000
+
+# had to ask chatGPT for help. Asked how to find all IID values that appear more than once in a .fam file
+awk ‘{print $2}’ ../raw/hw2.fam | sort | uniq -d > dup.fam
+# chat suggested to use awk instead of cut because I don’t know if the plink.fam file is delimited by tab or a space. Awk uses any whitespace whereas cut is stricter
+# awk '{print $2}' pulling out column 2 from the hw2.fam file
+# sort is arranging the lines alphabetically/numerically so duplicated lines are adjacent to each other
+# uniq only works on adjacent duplicates
+# uniq -d only prints the lines that are duplicated/appear more than once
+
+grep -F -f dup.fam ../raw/hw2.fam > hw2_duplicates.fam
+# grep finds patterns
+# -F says to treat the search term as literal text, not a pattern (avoids issues with special characters)
+# -f dup.fam says to use this file for the “patterns” to search for
+
+# HW2 Q2b:
+wc -l hw2_duplicates.fam
+# there are 147 duplicates
+# when I originally tried to remove the duplicates from hw2.fam like this:
+# grep -v -f hw2_duplicates.fam ../raw/hw2.fam > dups_removed.fam
+# the math was not mathing ugh! so I had to ask chat if I was doing it right
+# chat said grep removes any lines with matching patterns, INCLUDING the original occurrence and suggested using awk as a better way to remove duplicates like this:
+awk '!seen[$2]++' ../raw/hw2.fam > hw2_deduplicated.fam
+# seen[$2] creates a tracking table (counts the number of times a value is seen)
+# seen[$2]++ increases the count every time the value is seen
+# !seen[$2]++ keeps the first occurrence and removes all later duplicates
+# duplicates are now removed and we can count how many times each unique FID is in the file
+
+cut -f1 hw2_deduplicated.fam | sort | uniq -c > hw2_FID.counts
+# uniq -c counts consecutive (have to sort first) duplicates
+
+# HW2 Q3a:
+
