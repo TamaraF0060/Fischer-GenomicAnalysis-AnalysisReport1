@@ -1,0 +1,162 @@
+### Log for Genomic Analysis Homework Assignment 2 ###
+## Tamara Fischer ##
+# 2026.4.20 #
+
+
+# Load the subshell "Bash" and sign into the HPC.
+# Make sure McAfee VPN is turned off and you are signed into the Global Protect thing.
+Bash
+ssh trf0060@10.119.6.131
+
+# activate the conda environment for the course
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+
+# change directory to data directory in my individual folder (trf0060) with GitHub
+cd /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/
+
+# create a HW3 directory and go to it
+mkdir HW3
+cd HW3
+
+# create a data and scripts directory in the HW3 directory
+mkdir data
+mkdir scripts
+
+# go to data directory in HW3 and create a raw and processed directory, then go to raw
+cd data
+mkdir raw
+mkdir processed
+cd raw
+
+# copy all the files for HW3 into this directory
+cp -r /data/Reynolds/GenomicAnalysisCourse/HW3/* .
+ls
+
+# change to the scripts directory and copy over the example_fastq.sh
+cd ../../scripts
+cp -r /data/Reynolds/trf0060/example_fastq.sh .
+
+nano example_fastq.sh
+# change the name of the job name to HW3.1_fastqc
+# change output to HW3.1_fastqc_output.txt
+# change error to HW3.1_fastqc_error.txt
+# change the time to 30 minutes
+# change directory to /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/data/processed
+# change the file names to ../raw/22018FL-04-01-12_S12_L002_R1_001.fastq.gz ../raw/22018FL-04-01-12_S12_L002_R2_001.fastq.gz
+# save changes using Ctrl + x, hit y, and name the file HW3.1_fastq.sh, hit y
+# repeat for HW3.2 and HW3.3
+
+# create a fastq report by submitting the 3 new files to the queue
+sbatch HW3.1_fastq.sh
+sbatch HW3.2_fastq.sh
+sbatch HW3.3_fastq.sh
+
+# check the status of the report
+squeue -u trf0060
+
+# when the reports are finished, log out of the HPC
+exit
+
+# change directory to where you want the reports
+cd Downloads/
+
+# secure copy the zip files to the current directory (.)
+scp trf0060@10.119.6.131:/data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/data/processed/*zip .
+# enter password
+
+# analyze files in Downloads directory
+
+# the fastQC report for 22018FL-04-01-12_S12_L002 R1 and R2 has errors (X) for the per tile sequence quality and the adapter content. There are also warnings (!) on the per base sequence content and per sequence GC content. 
+# although the per tile sequence quality has a error, it looks like the ones in class that we said were ok
+# the per base sequence content appears to have an adapter still on it that is throwing an error, which could explain the adapter content error
+# the per sequence GC content looks fine even though there is a warning
+# the adapter content has a large % of the Illumina Universal Adapter
+
+# the fastQC report for 22018FL-04-01-21_S21_L007_R1 has warnings for per tile sequence quality, per base sequence content, and per sequence GC content, and a error for adapter content
+# the fastQC report for R2 is the same except the per tile sequence quality is an error instead of warning
+# for R1, per tile and GC content look fine, but the per base sequence content appears to have an adapter on it again and the adapter content has a large % of the Illumina Universal Adapter
+# for R2, maybe some lanes are messed up causing the per tile sequence quality to throw an error. The per base sequence content and adapter content show there is adapter contamination. GC content looks fine. 
+
+# the fastQC report for 22154FL-03-01-01_S1_L003_R1 has errors for per base sequence quality, per tile sequence quality, per base sequence content, sequence duplication levels, and adapter content and warnings on per sequence GC content and overrepresented sequences.
+# the fastQC report for R2 has errors on per base sequence quality, per base sequence content, per sequence GC content, sequence duplication levels, and adapter content and a warning on overrepresented sequences
+# for R1, after about 120 bp's, the per base sequence quality falls below 26 possibly indicating a degraded sample or not a lot of sample. There are a few tiles in the tile sequence quality, but otherwise I don't know what I'm looking for here. The per base sequence content shows there is a barcode or adapter on the first 7 positions of the sample read, then the sample looks braided. Per sequence GC content has 2 peaks - not good. There are >100 sequences duplicated, 2 overrepresented sequences, and a large % of adapter content. 
+# R2 looks like R1 except the tile sequence quality passed
+
+# based on the problems identified in each file, I would start by addressing the adapter content by doing some QC utilizing fastp
+
+# log back into the HPC
+ssh trf0060@10.119.6.131
+
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+
+cd /data/Reynolds/trf0060/
+
+# copy the TFfastp.sh and TF_fastq_trimmed.sh files to my HW3 scripts directory
+cp TFfastp.sh Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/scripts/
+cp TF_fastq_trimmed.sh Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/scripts/
+
+# go to scripts directory in HW3
+cd Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/scripts/
+
+nano TFfastp.sh
+
+# change job name to HW3.1_fastp, output name to HW3.1_fastp_output.txt, and error name to HW3.1_fastp_error.txt 
+# change the time (30 min)
+# change cd directory to /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/data/processed
+# change -i file to ../raw/22018FL-04-01-12_S12_L002_R1_001.fastq.gz
+# change -I file to ../raw/22018FL-04-01-12_S12_L002_R2_001.fastq.gz
+# change -o file to HW3.1_trimmed_R1_fastqc
+# change -O file to HW3.1_trimmed_R2_fastqc
+# be sure to put "R1" and "R2" in the output files
+# save changes as HW3.1_fastp.sh
+# repeat for 3.2 and 3.3
+
+# submit to the queue
+sbatch HW3.1_fastp.sh
+sbatch HW3.2_fastp.sh
+sbatch HW3.3_fastp.sh
+
+# check the queue
+squeue -u trf0060 
+
+# when finished, you can check the error report to see what all changed
+cat HW3.1_fastp_error.txt
+
+# set up the next fastq (trimmed)
+nano TF_fastq_trimmed.sh
+
+# change job name to HW3.1_trimmed_fastqc
+# change output to HW3.1_trimmed_output.txt
+# change error to HW3.1_trimmed_error.txt
+# change time to 30 minutes
+# change the directory to /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW3/data/processed
+# change the file names to HW3.1_trimmed_R1_fastqc and HW3.1_trimmed_R2_fastqc
+# save changes as HW3.1_trimmed_fastqc
+# repeat for 3.2 and 3.3 
+
+# submit to the queue
+sbatch HW3.1_trimmed_fastqc
+sbatch HW3.2_trimmed_fastqc
+sbatch HW3.3_trimmed_fastqc
+
+# check the queue 
+squeue -u trf0060
+
+# once finished, log out of the HPC
+exit
+
+# change directory to Downloads again
+cd Downloads/
+
+# secure copy both analysis reports to Downloads/
+scp trf0060@10.119.6.131:/data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/*trimmed_R1_fastqc.html
+# enter password
+scp trf0060@10.119.6.131:/data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/*trimmed_R2_fastqc.html
+# enter password
+
+# analyze fastqc reports
+# for HW3.1 R1 and R2, the adapter content was fixed, but the per base sequence still appears to have an adapter on it and now the sequence length distribution has a warning, everything else stayed the same. 
+# for HW3.2 R1 and R2, the adapter content was fixed but now there is a warning on sequence length distribution. Per tile sequence quality is still an error on R2, but I think this would still be ok to use 
+# for HW3.3 R1 and R2, unless you were expecting something crazy like this - maybe ancient DNA or very small amounts of DNA - I would throw this out, check the machine, and rerun the samples. R1 adapter content was fixed, but now there is a warning on sequence length distribution and an error on per sequence GC content. Nothing else changed. With R2, the adapter content was fixed, but there's now a warning on sequence length distribution. Nothing else changed. 
+
+# I repeated fastp on all 3, with R3 and R4, and it did seem to fix the problems a little more, except for 3.3 R4. I would maybe do it 1 more time to see if it gets any better. 
