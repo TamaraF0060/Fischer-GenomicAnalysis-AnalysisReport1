@@ -1,0 +1,112 @@
+### Log for Genomic Analysis Homework Assignment 4 ###
+## Tamara Fischer ##
+# 2026.4.27 #
+
+
+# Load the subshell "Bash" and sign into the HPC.
+# Make sure McAfee VPN is turned off and you are signed into the Global Pro>
+Bash
+ssh trf0060@10.119.6.131
+
+# activate the conda environment for the course
+conda activate /data/Reynolds/GenomicAnalysisCourse/conda_envs/course_env/
+
+# change directory to data directory in my individual folder (trf0060) with>
+cd /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/
+
+# create a HW4 directory and go to it
+mkdir HW4
+cd HW4
+
+# create a data and scripts directory in the HW4 directory
+mkdir data
+mkdir scripts
+
+
+### Map FASTQ files to the hg38 reference genome using bwa-mem ###
+
+# change to the scripts directory and copy over the example_slurm.sh
+cd scripts
+cp -r /data/Reynolds/trf0060/example_slurm.sh .
+
+nano example_slurm.sh
+# change the name of the job name to HW4.1_mapping
+# change output to HW4.1_output.txt
+# change error to HW4.1_error.txt
+# change cpus-per-task to 16
+# change mem to 32GB
+# change the time to 12 hours
+# change directory to /data/Reynolds/trf0060/Fischer-GenomicAnalysis-Analysis-AnalysisReport1/data/HW4/data
+# change the bottom line to bwa mem -16 4 /data/Reynolds/GenomicAnalysisCourse/reference/hg38.fa.gz HW3.1_trimmed_R3.fastq.gz HW3.1_trimmed_R4.fastq.gz > HW4.1_aligned.sam
+# save changes using Ctrl + x, hit y, and name the file HW4.1_mapping.sh, hit>
+# repeat for HW4.2 and HW4.3, changing names and files correspondingly
+
+# create a fastq report by submitting the 3 new files to the queue
+sbatch HW4.1_mapping.sh
+sbatch HW4.2_mapping.sh
+sbatch HW4.2_mapping.sh
+
+# check the status of the report
+squeue -u trf0060
+
+
+### Sort and index files ###
+
+# sort the SAM files
+samtools sort HW4.1_aligned.sam -o HW4.1_aligned.sorted.sam
+# repeat with 4.2 and 4.3
+
+# Use samtools to make the BAM file
+samtools view -b -o HW4.1_aligned.sorted.bam HW4.1_aligned.sorted.sam
+# -b turns sam into bam
+# -o output file name
+# repeat with 4.2 and 4.3
+
+# index the BAM file
+samtools index HW4.1_aligned.sorted.bam
+# repeat with 4.2 and 4.3
+
+
+### Quality reports with qualimap ###
+
+# look at quick summary stats of alignments
+samtools flagstat HW4.1_aligned.sorted.bam
+# no duplicates means we have not looked for them yet
+# repeat with 4.2 and 4.3
+
+# look at more in depth mapping summaries with qualimap
+qualimap bamqc -nt 4 -bam HW4.1_aligned.sorted.bam -outdir HW4.1_aligned.sorted_qualimap_results
+# repeat with 4.2 and 4.3
+# can make a slurm script
+
+# exit the HPC and change to Downloads directory to copy over qualimap results
+exit
+cd Downloads/
+scp -r trf0060@10.119.6.131:/data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/data/HW4/data/HW4.1_aligned.sorted.qualimap_results/ .
+# repeat with 4.2 and 4.3
+
+
+### Calculate coverage with mosdepth ###
+
+# log back into the HPC, conda activate, and go to /HW4/data directory
+mosdepth -t 4 HW4.1_aligned.sorted HW4.1_aligned.sorted.bam
+# will automatically add the ending to the files
+
+
+### Detect and mark duplicates with picard ###
+
+picard MarkDuplicates -I HW4.1_aligned.sorted.bam -O HW4.1_aligned.sorted.markdups.bam -M HW4.1_aligned.sorted.markdups_metrics.txt
+# repeat with 4.2 and 4.3
+
+picard AddOrReplaceReadGroups I=HW4.1_aligned.sorted.bam O=HW4.1_aligned.sorted.RG.bam RGID=sample RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=sample
+# repeat with 4.2 and 4.3
+
+picard MarkDuplicates -I HW4.1_aligned.sorted.RG.bam -O HW4.1_align
+ed.sorted.RG.markdups.bam -M HW4.1_aligned.sorted.RG.markdups_metrics.txt
+# repeat with 4.2 and 4.3
+
+# stage the HW4_project_analysis_log 
+git add /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/HW4_project_analysis_log.txt
+
+# commit it with a message
+git commit -m "HW4_project_analysis_log"
