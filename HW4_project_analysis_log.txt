@@ -52,32 +52,69 @@ squeue -u trf0060
 
 ### Sort and index files ###
 
-# sort the SAM files
-samtools sort HW4.1_aligned.sam -o HW4.1_aligned.sorted.sam
+# create a slurm script to sort the SAM files
+nano HW4.1_mapping.sh
+
+# change the name of the job name to HW4.1_samsorted
+# change output to HW4.1_samsorted.output.txt
+# change error to HW4.1_samsorted.error.txt
+# change the bottom line to samtools sort HW4.1_aligned.sam -o HW4.1_aligned.sorted.sam
+# save changes and rename HW4.1_samsorted.sh
 # repeat with 4.2 and 4.3
 
-# Use samtools to make the BAM file
-samtools view -b -o HW4.1_aligned.sorted.bam HW4.1_aligned.sorted.sam
-# -b turns sam into bam
-# -o output file name
+# submit batch jobs
+sbatch HW4.1_samsorted.sh
+sbatch HW4.2_samsorted.sh
+sbatch HW4.3_samsorted.sh
+
+# make a slurm script and use samtools to make the BAM file
+nano HW4.1_samsorted.sh
+
+# change the name of the job name to HW4.1_sam2bam
+# change output to HW4.1_sam2bam.output.txt
+# change error to HW4.1_sam2bam.error.txt
+# change the bottom line to samtools view -b -o HW4.1_aligned.sorted.bam HW4.1_aligned.sorted.sam
+  # -b turns sam into bam
+  # -o output file name
+# save changes and rename HW4.1_sam2bam.sh
 # repeat with 4.2 and 4.3
+
+# submit batch jobs
+sbatch HW4.1_sam2bam.sh
+sbatch HW4.2_sam2bam.sh
+sbatch HW4.3_sam2bam.sh
 
 # index the BAM file
 samtools index HW4.1_aligned.sorted.bam
 # repeat with 4.2 and 4.3
 
+ls 
+# look for .bai files
 
 ### Quality reports with qualimap ###
 
 # look at quick summary stats of alignments
 samtools flagstat HW4.1_aligned.sorted.bam
-# no duplicates means we have not looked for them yet
+# no duplicates means we have not looked for and marked them yet. flagstat will only report marked duplicates.
 # repeat with 4.2 and 4.3
 
-# look at more in depth mapping summaries with qualimap
-qualimap bamqc -nt 4 -bam HW4.1_aligned.sorted.bam -outdir HW4.1_aligned.sorted_qualimap_results
+# create a slurm script to look at more in depth mapping summaries with qualimap
+nano HW4.1_sam2bam.sh
+
+# change job name to HW4.1_qualimap
+# change output to HW4.1_qualimap_output.txt
+# change error to HW4.1_qualimap_error.txt
+# change the last line to qualimap bamqc -nt 4 -bam HW4.1_aligned.sorted.bam -outdir HW4.1_aligned.sorted_qualimap_results
+# save changes and rename as HW4.1_qualimap.sh 
 # repeat with 4.2 and 4.3
-# can make a slurm script
+
+# submit batch jobs
+sbatch HW4.1_qualimap.sh
+sbatch HW4.2_qualimap.sh
+sbatch HW4.3_qualimap.sh
+
+# check the queue to watch for when they finish
+squeue -u trf0060
 
 # exit the HPC and change to Downloads directory to copy over qualimap results
 exit
@@ -89,24 +126,52 @@ scp -r trf0060@10.119.6.131:/data/Reynolds/trf0060/Fischer-GenomicAnalysis-Analy
 ### Calculate coverage with mosdepth ###
 
 # log back into the HPC, conda activate, and go to /HW4/data directory
-mosdepth -t 4 HW4.1_aligned.sorted HW4.1_aligned.sorted.bam
-# will automatically add the ending to the files
+# make a slurm script
+nano HW4.1_qualimap.sh
+
+# change job name to HW4.1_mosdepth
+# change output to HW4.1_mosdepth_output.txt
+# change error to HW4.1_mosdepth_error.txt
+# change the last line to mosdepth -t 16 HW4.1_aligned.sorted HW4.1_aligned.sorted.bam
+  # The first file prefix is the output. It will automatically add the ending to the files
+  # The second file is the input bam file
+# save changes and rename as HW4.1_mosdepth.sh
+# repeat with 4.2 and 4.3
+
+# submit batch jobs
+sbatch HW4.1_mosdepth.sh
+sbatch HW4.2_mosdepth.sh
+sbatch HW4.3_mosdepth.sh
 
 
 ### Detect and mark duplicates with picard ###
 
-picard MarkDuplicates -I HW4.1_aligned.sorted.bam -O HW4.1_aligned.sorted.markdups.bam -M HW4.1_aligned.sorted.markdups_metrics.txt
+# add read groups
+picard AddOrReplaceReadGroups I=HW4.1_aligned.sorted.bam O=HW4.1_aligned.so>
 # repeat with 4.2 and 4.3
 
-picard AddOrReplaceReadGroups I=HW4.1_aligned.sorted.bam O=HW4.1_aligned.sorted.RG.bam RGID=sample RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=sample
+# make a slurm script 
+nano HW4.1_mosdepth.sh
+
+# change job name to HW4.1_mark_dups
+# change output to HW4.1_mark_dups_output.txt
+# change error to HW4.1_mark_dups_error.txt
+# change the last line to picard MarkDuplicates -I HW4.1_aligned.sorted.RG.bam -O HW4.1_aligned.sorted.RG.markdups.bam -M HW4.1_aligned.sorted.RG.markdups_metrics.txt
+# save changes and rename as HW4.1_mark_dups.sh
 # repeat with 4.2 and 4.3
 
-picard MarkDuplicates -I HW4.1_aligned.sorted.RG.bam -O HW4.1_align
-ed.sorted.RG.markdups.bam -M HW4.1_aligned.sorted.RG.markdups_metrics.txt
-# repeat with 4.2 and 4.3
+# submit batch jobs
+sbatch HW4.1_mark_dups.sh
+sbatch HW4.2_mark_dups.sh
+sbatch HW4.3_mark_dups.sh
+
+# this picard stuff is not working and idk what I'm doing. Maybe I'll come back to it later... maybe.
 
 # stage the HW4_project_analysis_log 
 git add /data/Reynolds/trf0060/Fischer-GenomicAnalysis-AnalysisReport1/HW4_project_analysis_log.txt
 
 # commit it with a message
 git commit -m "HW4_project_analysis_log"
+
+# push it to github
+git push
